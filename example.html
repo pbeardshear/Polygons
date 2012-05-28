@@ -1,0 +1,21 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<head>
+	<script type="text/javascript" src="lib/rhill-voronoi.js"></script>
+	<script type="text/javascript" src="polygons.js"></script>
+	<!-- Modules -->
+	<script type="text/javascript" src="modules/oceans.js"></script>
+	<script type="text/javascript" src="modules/elevation.js"></script>
+	<script type="text/javascript">
+		window.addEventListener('load', function () {
+			var polygons = Polygons.generate(600, 600, 500, 4);
+			Polygons.Oceans.generate(true, 2, null, 60);
+			Polygons.Elevation.generate(5);
+			// Draw the polygons
+			Polygons.draw(document.getElementById('polygons'));
+		});
+	</script>
+</head>
+<body>
+	<canvas id="polygons" height="600" width="600"></canvas>
+</body>
+</html>
