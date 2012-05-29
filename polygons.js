@@ -12,6 +12,9 @@
 Polygons = (function () {
 	// Namespace for utility functions
 	var util = {
+		capitalize: function (str) {
+			return str.substring(0, 1).toUpperCase() + str.substring(1);
+		},
 		getEdges: function (cell) {
 			return cell.halfedges.map(function (he) { return { start: he.getStartpoint(), end: he.getEndpoint() } });
 		}
@@ -48,6 +51,31 @@ Polygons = (function () {
 		_transformEdge: function (index, edge) {
 			edge.start = this.corners[edge.start] || edge.start;
 			edge.end = this.corners[edge.end] || edge.end;
+		},
+		
+		// Load map modules as plugins to the Polygon generator
+		load: function (modules, callback) {
+			if (Array.isArray(modules)) {
+				// Load the modules in order
+				var directoryPrefix = 'modules/',
+					pathedModules = modules.map(function (name) { return directoryPrefix + name; });
+				require(pathedModules, function () {
+					// Finished loading all modules
+					// We need to use the arguments array to dynamically get all module definitions
+					var loadedModules = Array.prototype.slice.call(arguments, 0);
+					// Attach each loaded module to the Polygons namespaces
+					for (var i = 0; i < loadedModules.length; i++) {
+						var moduleName = util.capitalize(modules[i]);
+						Polygons[moduleName] = loadedModules[i];
+					}
+					if (callback) {
+						callback();
+					}
+				});
+			}
+			else {
+				throw new Error('Failed to load Polygons: Argument to load must be an array of module names');
+			}
 		},
 		
 		generate: function (height, width, pointCount, iterations) {

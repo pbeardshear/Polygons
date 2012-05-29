@@ -6,7 +6,7 @@
  *
  */
  
-Polygons.Elevation = (function () {
+define(['modules/oceans'], function () {
 	var ElevationStep = 10,
 		CoastElevation = 0;
 	var colors = [
@@ -73,4 +73,4 @@ Polygons.Elevation = (function () {
 			}
 		}
 	};
-})();
+});

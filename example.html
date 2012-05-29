@@ -1,21 +1,114 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE html>
+<html lang="en">
 <head>
+	<script src="lib/require.js"></script>
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script src="lib/bootstrap.js"></script>
+	<script src="lib/bootstrap-collapse.js"></script>
 	<script type="text/javascript" src="lib/rhill-voronoi.js"></script>
 	<script type="text/javascript" src="polygons.js"></script>
-	<!-- Modules -->
-	<script type="text/javascript" src="modules/oceans.js"></script>
-	<script type="text/javascript" src="modules/elevation.js"></script>
-	<script type="text/javascript">
-		window.addEventListener('load', function () {
-			var polygons = Polygons.generate(600, 600, 500, 4);
+	<script>
+		Polygons.load(['oceans', 'elevation'], function () {
+			Polygons.generate(600, 1000, 700, 4);
 			Polygons.Oceans.generate(true, 2, null, 60);
 			Polygons.Elevation.generate(5);
 			// Draw the polygons
 			Polygons.draw(document.getElementById('polygons'));
 		});
 	</script>
+	<link rel="stylesheet" href="lib/css/bootstrap.min.css" />
+	<style>
+		.container-fluid { margin: 20px 0px; }
+		.center { margin: 0px auto; }
+		.accordion-name { margin: 0px 10px 0px 0px; }
+		
+		.control-group > div { float: left; position: relative; }
+		.control-group .labels { width: 80px; }
+		.control-group .labels span { height: 18px; display: block; padding: 0px 4px 7px 4px; margin-bottom: 9px; }
+		.control-group .inputs { width: 160px; text-align: left; }
+		.control-group .inputs input { height: 18px; width: 150px;  }
+		.control-group .help div { width: 14px; height: 18px; padding: 0px 0px 7px 0px; margin: 0px 2px 9px 2px; }
+	</style>
 </head>
 <body>
-	<canvas id="polygons" height="600" width="600"></canvas>
+	<div class="container-fluid">
+		<div class="row-fluid">
+			<div class="span3" id="controls">
+				<div class="well" style="padding: 8px 0px;">
+					<ul class="nav nav-list">
+						<li class="nav-header">View</li>
+						<li class="active"><a href="#">Flatten</a></li>
+						<li><a href="#">Expand</a></li>
+						<li class="nav-header">Loaded Modules</li>
+						<li>
+							<div class="accordion">
+								<div class="accordion-group">
+									<div class="accordion-heading">
+										<a class="accordion-toggle" data-toggle="collapse" data-target="#module-ocean">
+											<span class="accordion-name">Oceans</span><i class="icon-ok"></i>
+										</a>
+									</div>
+									<div class="collapse" id="module-ocean">
+										<div class="accordion-inner">
+											<div class="control-group">
+												<div class="help">
+													<div class="icon"></div>
+													<div class="icon"><i class="icon-question-sign"></i></div>
+													<div class="icon"></div>
+													<div class="icon"><i class="icon-question-sign"></i></div>
+												</div>
+												<div class="labels">
+													<span>Fill</span>
+													<span>Noise</span>
+													<span>Threshold</span>
+													<span>Step Size</span>
+												</div>
+												<div class="inputs">
+													<input type="checkbox" />
+													<input type="number" />
+													<input type="number" />
+													<input type="number" />
+												</div>
+												
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="accordion-group">
+									<div class="accordion-heading">
+										<a class="accordion-toggle" data-toggle="collapse" data-target="#module-elevation">
+											<span class="accordion-name">Elevation</span><i class="icon-ok"></i>
+										</a>
+									</div>
+									<div class="collapse" id="module-elevation">
+										<div class="accordion-inner">
+											Nothing in here.
+										</div>
+									</div>
+								</div>
+								<div class="accordion-group">
+									<div class="accordion-heading">
+										<a class="accordion-toggle" data-toggle="collapse" data-target="#module-rivers">
+											<span class="accordion-name">Rivers</span>
+										</a>
+									</div>
+									<div class="collapse" id="module-rivers">
+										<div class="accordion-inner">
+											Rivers module, I guess.
+										</div>
+									</div>
+								</div>
+							</div>
+						</li>
+					</ul>
+				</div>
+			</div>
+			<div class="span9">
+				<div class="well" style="max-width: 1000px; min-width: 1000px;">
+					<canvas id="polygons" height="600" width="1000"></canvas>
+				</div>
+			</div>
+		</div>
+	</div>
 </body>
 </html>

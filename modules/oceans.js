@@ -6,7 +6,7 @@
  *
  */
  
-Polygons.Oceans = (function () {
+define(function () {
 	var colors = [
 		'#FF0000',
 		'#FF7600',
@@ -46,7 +46,7 @@ Polygons.Oceans = (function () {
 				var distance = util.getBorderDistance(polygon);
 				if ((fill && polygon.border) || (distance + (util.rand()*noise*stepSize)) < threshold) {
 					polygon.ocean = true;
-					polygon.fill = '#1921B1';
+					polygon.fill = '#363661';	// ocean color
 					polygon.stroke = '#000';
 				}
 			});
@@ -70,4 +70,4 @@ Polygons.Oceans = (function () {
 			// TODO: Post Processing to even out lone single islands
 		}
 	};
-})();
+});
