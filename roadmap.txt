@@ -1,17 +1,20 @@
 // Planned next steps
-1. Rivers module
+1. Layered Rendering
+	- Provide support for drawing on distinct canvas layer, or drawing off grid (i.e. not confined to stay on edges)
+	- Support for stroked paths (lists of sequenced corners) for rivers and roads
+2. Rivers module
 	- noisy deflections from baseline, think of data structure to efficiently represent this
 	- deflections must be contained with polygon formed by centers and corners of adjacent polygons
-2. 3D Viewer
+3. 3D Viewer
 	- Implement WebGL 3D representation of map, with elevation and slope taken into account
 	- Rotations, zooming, panning should be supported, support for time of day and seasons may come later
-3. Algorithm for generating land/ocean demarcation
+4. Algorithm for generating land/ocean demarcation
 	- Inkblot method: generate random locations on map, then expand around those polygons to generate spreading "inkblots"
 	- Introduce noise at edges, and add random locations for lakes (water surrounded by land)
-4. Biome/Weather
+5. Biome/Weather
 	- Add support for classifying regions based on elevation and moisture, then fit these properties into a 
 	  table of biome types.
 	- Additionally, add weather types to each biome based on season
-5. Roads
+6. Roads
 	- Constructed paths that are not required to always run along a defined polygon edge, to achieve a more natural
 	  curvature
