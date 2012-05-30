@@ -18,6 +18,7 @@ define(['modules/oceans'], function () {
 		'#fbfcfb'
 	];
 	return {
+		// @private
 		_initCoasts: function (processing, seen) {
 			iter(Polygons.corners, function (i, corner) {
 				if (corner.coast) {

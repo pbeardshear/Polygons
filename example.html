@@ -8,10 +8,11 @@
 	<script type="text/javascript" src="lib/rhill-voronoi.js"></script>
 	<script type="text/javascript" src="polygons.js"></script>
 	<script>
-		Polygons.load(['oceans', 'elevation'], function () {
+		Polygons.load(['oceans', 'elevation', 'rivers'], function () {
 			Polygons.generate(600, 1000, 700, 4);
 			Polygons.Oceans.generate(true, 2, null, 60);
 			Polygons.Elevation.generate(5);
+			Polygons.Rivers.generate(6);
 			// Draw the polygons
 			Polygons.draw(document.getElementById('polygons'));
 		});

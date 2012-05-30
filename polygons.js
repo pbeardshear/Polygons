@@ -46,11 +46,16 @@ Polygons = (function () {
 	};
 	
 	return {
+		// @private
 		// Takes an edge and sets its vertices with the corner objects
 		// that represent them, if they exist
 		_transformEdge: function (index, edge) {
-			edge.start = this.corners[edge.start] || edge.start;
-			edge.end = this.corners[edge.end] || edge.end;
+			if (this.corners[edge.start] && this.corners[edge.end]) {
+				var edgeID = this.corners[edge.start].id + '-' + this.corners[edge.end].id;
+				edge.start = this.corners[edge.start];
+				edge.end = this.corners[edge.end];
+				this.edges[edgeID] = edge;
+			}
 		},
 		
 		// Load map modules as plugins to the Polygon generator
@@ -122,7 +127,7 @@ Polygons = (function () {
 			// 		 We shouldn't have to delay drawing the graph for this data, but other modules may depend on it
 			this.centers = [];
 			this.corners = {};
-			this.edges = [];
+			this.edges = {};
 			// Cells are organized by voronoiId, which correspond to their site location
 			for (var i = 0; i < edges.length; i++) {
 				// Centers
@@ -171,7 +176,6 @@ Polygons = (function () {
 					this.corners[vertexB].polygons[rightCellID] = this.centers[rightCellID];
 					iter(this.centers[rightCellID].edges, this, this._transformEdge);
 				}
-
 			}
 			
 			return result;
@@ -182,20 +186,38 @@ Polygons = (function () {
 		draw: function (canvas) {
 			if (this.centers) {
 				this.context = canvas.getContext('2d');
-				var polygons = this.centers;
+				var polygons = this.centers,
+					markedEdges;
 				this.context.save();
 				iter(polygons, this, function (i, cell) {
+					this.context.save();
+					markedEdges = [];
 					this.context.strokeStyle = cell.stroke || '#000';
 					this.context.fillStyle = cell.fill || '#FFF';
 					this.context.beginPath();
 					for (var i = 0; i < cell.edges.length; i++) {
 						var edge = cell.edges[i];
+						if (edge.stroke) {
+							markedEdges.push(edge);
+						}
 						this.context.lineTo(edge.start.pos.x, edge.start.pos.y);
 						this.context.lineTo(edge.end.pos.x, edge.end.pos.y);
 					}
 					this.context.closePath();
 					this.context.stroke();
 					this.context.fill();
+					// We need to go over the marked edges now
+					for (var i = 0; i < markedEdges.length; i++) {
+						var edge = markedEdges[i];
+						this.context.strokeStyle = edge.stroke;
+						this.context.lineWidth = edge.thickness || 5;
+						this.context.beginPath();
+						this.context.moveTo(edge.start.pos.x, edge.start.pos.y);
+						this.context.lineTo(edge.end.pos.x, edge.end.pos.y);
+						this.context.closePath();
+						this.context.stroke();
+					}
+					this.context.restore();
 				});
 				this.context.restore();
 			}
@@ -203,6 +225,10 @@ Polygons = (function () {
 				// The polygons weren't generated yet
 				throw new Error('No polygons have been generated.  Please call Polygons.generate() first.');
 			}
+		},
+		
+		getEdge: function (start, end) {
+			return Polygons.edges[start.id + '-' + end.id] || Polygons.edges[end.id + '-' + start.id] || null;
 		}
 	};
 })();
