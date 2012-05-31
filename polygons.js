@@ -47,6 +47,13 @@ Polygons = (function () {
 	
 	return {
 		// @private
+		// TODO: Store each <canvas> layer context somewhere
+		_buffer: { 'base': [] },
+		
+		// @private
+		_layersQueue: [],
+		
+		// @private
 		// Takes an edge and sets its vertices with the corner objects
 		// that represent them, if they exist
 		_transformEdge: function (index, edge) {
@@ -62,7 +69,8 @@ Polygons = (function () {
 		load: function (modules, callback) {
 			if (Array.isArray(modules)) {
 				// Load the modules in order
-				var directoryPrefix = 'modules/',
+				var me = this,
+					directoryPrefix = 'modules/',
 					pathedModules = modules.map(function (name) { return directoryPrefix + name; });
 				require(pathedModules, function () {
 					// Finished loading all modules
@@ -71,8 +79,33 @@ Polygons = (function () {
 					// Attach each loaded module to the Polygons namespaces
 					for (var i = 0; i < loadedModules.length; i++) {
 						var moduleName = util.capitalize(modules[i]);
+						// Load the module into the Polygons namespace
 						Polygons[moduleName] = loadedModules[i];
+						// Check if this module defines a layer
+						var layer = loadedModules[i].layer;
+						if (layer && !me._buffer[layer]) {
+							me._buffer[layer] = [];
+							// Defer the creation of the <canvas> elements that will house these layers until we can batch them
+							me._layersQueue.push(layer);
+						}
 					}
+					
+					// Create the canvas elements here
+					if (me._layersQueue.length) {
+						var doc = document,
+							container = doc.getElementById('layers'),
+							// Using a document fragment should only trigger one reflow...
+							fragment = doc.createDocumentFragment();
+						for (var i = 0; i < me._layersQueue.length; i++) {
+							var canvas = doc.createElement('canvas');
+							canvas.height = 600;
+							canvas.width = 1000;
+							canvas.id = me._layersQueue[i];
+							fragment.appendChild(canvas);
+						}
+						container.appendChild(fragment);
+					}
+					
 					if (callback) {
 						callback();
 					}
@@ -183,8 +216,8 @@ Polygons = (function () {
 		
 		// Buffer up a Drawable type to redraw
 		// Drawable types include - polygon, path, and bezierPath
-		buffer: function (drawable) {
-			this._buffer.push(drawable);
+		buffer: function (drawable, layer) {
+			this._buffer[layer || 'base'].push(drawable);
 		},
 		
 		// Draws each polygon, based on its stroke and fill

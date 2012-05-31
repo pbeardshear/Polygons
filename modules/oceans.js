@@ -48,6 +48,7 @@ define(function () {
 					polygon.ocean = true;
 					polygon.fill = '#363661';	// ocean color
 					polygon.stroke = '#000';
+					Polygons.buffer(polygon);
 				}
 			});
 			

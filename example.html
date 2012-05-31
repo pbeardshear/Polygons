@@ -19,6 +19,8 @@
 	</script>
 	<link rel="stylesheet" href="lib/css/bootstrap.min.css" />
 	<style>
+		canvas { position: absolute; }
+		#layers { min-height: 600px; min-width: 1000px; max-height: 600px; max-width: 1000px; }
 		.container-fluid { margin: 20px 0px; }
 		.center { margin: 0px auto; }
 		.accordion-name { margin: 0px 10px 0px 0px; }
@@ -105,7 +107,7 @@
 				</div>
 			</div>
 			<div class="span9">
-				<div class="well" style="max-width: 1000px; min-width: 1000px;">
+				<div id="layers" class="well">
 					<canvas id="polygons" height="600" width="1000"></canvas>
 				</div>
 			</div>

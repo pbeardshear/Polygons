@@ -10,6 +10,9 @@ define(['modules/paths', 'modules/oceans', 'modules/elevation'], function () {
 	var RiverStroke = '#0000FF';
 
 	return {
+		// Define the context layer that rivers should be drawn to
+		layer: 'rivers',
+		
 		// @private
 		// Returns the neighboring corner with the lowest elevation
 		_lowestNeighbor: function (corner) {
@@ -37,7 +40,7 @@ define(['modules/paths', 'modules/oceans', 'modules/elevation'], function () {
 					path.append(this._lowestNeighbor);
 				}
 				// Buffer up the path for rendering
-				Polygons.buffer(path);
+				Polygons.buffer(path, this.layer);
 			}
 		}
 	};

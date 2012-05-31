@@ -64,6 +64,7 @@ define(['modules/oceans'], function () {
 					if (!polygon.ocean) {
 						var elevationIndex = (polygon.elevation - (polygon.elevation % 13)) / 13;
 						polygon.fill = colors[Math.min(elevationIndex, colors.length - 1)];
+						Polygons.buffer(polygon);
 					}
 				});
 			}
