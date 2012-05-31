@@ -6,7 +6,7 @@
  *
  */
  
-define(['modules/oceans', 'modules/elevation'], function () {
+define(['modules/paths', 'modules/oceans', 'modules/elevation'], function () {
 	var RiverStroke = '#0000FF';
 
 	return {
@@ -19,7 +19,7 @@ define(['modules/oceans', 'modules/elevation'], function () {
 		generate: function (count) {
 			// Pick count number of corners on the map as starting points for the rivers
 			var centers = Polygons.centers,
-				next;
+				path;
 			for (var i = 0; i < count; i++) {
 				var polygon = centers[Math.floor(Math.random() * centers.length)];
 				while (polygon.ocean) {
@@ -27,17 +27,18 @@ define(['modules/oceans', 'modules/elevation'], function () {
 				}
 				// Always choose the first edge's starting corner
 				// This gives up very little generality, as edge positions are not absolutely ordered
-				current = polygon.edges[0].start;
+				path = Polygons.Paths.create(polygon.edges[0].start);
+				path.stroke = RiverStroke;
+				path.thickness = 5;
+				// current = polygon.edges[0].start;
+				
 				// Follow the downslope until we reach the ocean
-				while (current.land) {
-					next = this._lowestNeighbor(current);
-					var edge = Polygons.getEdge(current, next);
-					edge.stroke = RiverStroke;
-					edge.thickness = 5;
-					current = next;
+				while (path.last().land) {
+					path.append(this._lowestNeighbor);
 				}
+				// Buffer up the path for rendering
+				Polygons.buffer(path);
 			}
-			
 		}
 	};
 });

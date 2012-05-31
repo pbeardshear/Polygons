@@ -181,6 +181,12 @@ Polygons = (function () {
 			return result;
 		},
 		
+		// Buffer up a Drawable type to redraw
+		// Drawable types include - polygon, path, and bezierPath
+		buffer: function (drawable) {
+			this._buffer.push(drawable);
+		},
+		
 		// Draws each polygon, based on its stroke and fill
 		// If none are provided, then we default to white fill and black stroke
 		draw: function (canvas) {
