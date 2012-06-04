@@ -1,20 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+	<title>N-GON!</title>
 	<script src="lib/require.js"></script>
 	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
 	<script src="lib/bootstrap.js"></script>
 	<script src="lib/bootstrap-collapse.js"></script>
 	<script type="text/javascript" src="lib/rhill-voronoi.js"></script>
 	<script type="text/javascript" src="polygons.js"></script>
+	<!-- Test for 3D viewer -->
+	<!-- Shaders -->
+	<script id="shader-fs" type="x-shader/x-fragment">
+		precision mediump float;
+		
+		varying vec4 vColor;
+		
+		void main(void) {
+			gl_FragColor = vColor;
+		}
+	</script>
+	<script id="shader-vs" type="x-shader/x-vertex">
+		attribute vec3 aVertexPosition;
+		attribute vec4 aVertexColor;
+		
+		uniform mat4 uMVMatrix;
+		uniform mat4 uPMatrix;
+		
+		varying vec4 vColor;
+		
+		void main(void) {
+			gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+			vColor = aVertexColor;
+		}
+	</script>
+	<!-- End shaders -->
+	<script type="text/javascript" src="webgl/glMatrix-0.9.5.min.js"></script>
+	<script type="text/javascript" src="webgl/webgl-utils.js"></script>
+	<script type="text/javascript" src="webgl/webgl_demo.js"></script>
+	<!-- End test -->
 	<script>
-		Polygons.load(['paths', 'oceans', 'elevation', 'rivers'], function () {
+		Polygons.load(['paths', 'oceans', 'elevation'], function () {
 			Polygons.generate(600, 1000, 700, 4);
 			Polygons.Oceans.generate(true, 2, null, 60);
 			Polygons.Elevation.generate(5);
-			Polygons.Rivers.generate(6);
+			// Polygons.Rivers.generate(6);
 			// Draw the polygons
-			Polygons.draw(document.getElementById('polygons'));
+			// Polygons.draw(document.getElementById('polygons'));
+			// WebGL stuff
+			webGLStart();
 		});
 	</script>
 	<link rel="stylesheet" href="lib/css/bootstrap.min.css" />
