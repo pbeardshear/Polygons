@@ -179,8 +179,8 @@ function hexToArgb(hex) {
 // the default <canvas> coordinate system to the WebGL one
 function transformPosition(center, edge) {
 	var ratio = gl.viewportWidth / gl.viewportHeight,
-		width = 400,
-		height = 200,
+		width = gl.viewportWidth,
+		height = gl.viewportHeight,
 		xOffset = width / 2,
 		yOffset = height / 2,
 		vertices = [],
@@ -190,33 +190,57 @@ function transformPosition(center, edge) {
 	vertices = vertices.concat([
 		(center.pos.x - xOffset) / width, 
 		(-center.pos.y + yOffset) / height, 
-		center.ocean ? 0.0 : center.elevation / 50]
+		center.ocean ? 0.0 : center.elevation / 200]
 	);
 	vertices = vertices.concat([
 		(start.pos.x - xOffset) / width, 
 		(-start.pos.y + yOffset) / height, 
-		start.land ? start.elevation / 50 : 0.0
+		start.land ? start.elevation / 200 : 0.0
 	]);
 	vertices = vertices.concat([
 		(end.pos.x - xOffset) / width, 
 		(-end.pos.y + yOffset) / height, 
-		end.land ? end.elevation / 50 : 0.0
+		end.land ? end.elevation / 200 : 0.0
 	]);
 	// console.log(vertices);
 	return vertices;
+}
+
+// Returns an array of points comprising the normals 
+// of the plane formed by the center point and the start
+// and end points of the edge
+function computeNormals(center, edge) {
+	var start = edge.start,
+		end = edge.end,
+		a = vec3.create([center.pos.x, center.pos.y, center.elevation]),
+		b = vec3.create([start.pos.x, start.pos.y, start.elevation]),
+		c = vec3.create([end.pos.x, end.pos.y, end.elevation]),
+		v1 = vec3.subtract(b, a, []),	// need empty array as output of operation, otherwise it is performed in place on the first argument
+		v2 = vec3.subtract(c, a, []);
+	
+	// The normal can point in two directions
+	// we always want the one that points "up" (i.e. positive z)
+	var n1 = vec3.cross(v1, v2),
+		n2 = vec3.cross(v2, v1),
+		normal = vec3.normalize(n1[2] < 0 ? n1 : n2),
+		normalArray = Array.prototype.slice.call(normal);	// Return value is an object in the form of an array, not an actual array
+	// return [0, 0, 1, 0, 0, 1, 0, 0, 1];
+	return normalArray.concat(normalArray, normalArray);	// All three vertices have the same normal
 }
 
 //
 //	Initialize drawing buffers for each shape
 //
 var positionBuffers = [],
-	colorBuffers = [];
+	colorBuffers = [],
+	normalBuffers = [];
 	
 function initBuffers() {
 	var centers = Polygons.centers,
 		corners = Polygons.corners,
 		currentBuffer,
 		currentColorBuffer,
+		currentNormalBuffer,
 		vertices,
 		colors,
 		edges;
@@ -236,6 +260,14 @@ function initBuffers() {
 			currentBuffer.itemSize = 3;
 			currentBuffer.numItems = 3;
 			
+			// Normals
+			currentNormalBuffer = gl.createBuffer();
+			gl.bindBuffer(gl.ARRAY_BUFFER, currentNormalBuffer);
+			vertices = computeNormals(centers[i], edges[j]);
+			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+			currentNormalBuffer.itemSize = 3;
+			currentNormalBuffer.numItems = 3;
+			
 			// Color
 			currentColorBuffer = gl.createBuffer();
 			gl.bindBuffer(gl.ARRAY_BUFFER, currentColorBuffer);
@@ -248,6 +280,7 @@ function initBuffers() {
 			currentColorBuffer.numItems = 3;
 			
 			positionBuffers.push(currentBuffer);
+			normalBuffers.push(currentNormalBuffer);
 			colorBuffers.push(currentColorBuffer);
 		}
 		// gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
@@ -274,17 +307,22 @@ function initBuffers() {
 function setMatrixUniforms() {
 	gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
 	gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
+	
+	var normalMatrix = mat3.create();
+	mat4.toInverseMat3(mvMatrix, normalMatrix);
+	mat3.transpose(normalMatrix);
+	gl.uniformMatrix3fv(shaderProgram.nMatrixUniform, false, normalMatrix);
 }
 
 //
 //	Flush the buffer to WebGL and render to the screen
 //
-var first = true;
+var lighting = true;	// Enable uniform lighting
 function drawScene() {
 	gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
 	// Set flags
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-	// Set up the camera projection (perspective in this case, orthographic is default)
+	// Set up the camera projection (perspective in this case)
 	mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
 	// Reset the drawing matrix
 	// if (first) {
@@ -297,6 +335,21 @@ function drawScene() {
 	for (var i = 0; i < positionBuffers.length; i++) {
 		gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffers[i]);
 		gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, positionBuffers[i].itemSize, gl.FLOAT, false, 0, 0);
+		gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffers[i]);
+		gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, normalBuffers[i].itemSize, gl.FLOAT, false, 0, 0);
+		gl.uniform1i(shaderProgram.useLightingUniform, true);
+		if (lighting) {
+			// Ambient Light color
+			gl.uniform3f(shaderProgram.ambientColorUniform, 0.8, 0.8, 0.8);
+			// Light direction
+			var lightingDirection = [-0.25, -0.25, -1],
+				adjustedLD = vec3.create();
+			vec3.normalize(lightingDirection, adjustedLD);
+			vec3.scale(adjustedLD, -1);
+			gl.uniform3fv(shaderProgram.lightingDirectionUniform, adjustedLD);
+			// Directional light color
+			gl.uniform3f(shaderProgram.directionalColorUniform, 1, 1, 1);
+		}
 		gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffers[i]);
 		gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, colorBuffers[i].itemSize, gl.FLOAT, false, 0, 0);
 		// Flush the vertices to the graphics card
@@ -315,11 +368,8 @@ function drawScene() {
 	// gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, squareVertexColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
 	// setMatrixUniforms();
 	// // gl.drawArrays(gl.TRIANGLE_STRIP, 0, squareVertexPositionBuffer.numItems);
-	if (first) {
-		first = false;
-	}
 	
 	mat4.identity(mvMatrix);
-	mat4.translate(mvMatrix, [0, 0, -6]);
+	mat4.translate(mvMatrix, [0, 0, -0.5]);
 	mat4.multiply(mvMatrix, moonRotationMatrix);
 }
