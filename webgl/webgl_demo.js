@@ -159,6 +159,15 @@ function initShaders() {
 	
 	shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, 'uPMatrix');
 	shaderProgram.mvMatrixUniform =  gl.getUniformLocation(shaderProgram, 'uMVMatrix');
+	
+	shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
+	shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+	shaderProgram.nMatrixUniform = gl.getUniformLocation(shaderProgram, "uNMatrix");
+	shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
+	shaderProgram.useLightingUniform = gl.getUniformLocation(shaderProgram, "uUseLighting");
+	shaderProgram.ambientColorUniform = gl.getUniformLocation(shaderProgram, "uAmbientColor");
+	shaderProgram.lightingDirectionUniform = gl.getUniformLocation(shaderProgram, "uLightingDirection");
+	shaderProgram.directionalColorUniform = gl.getUniformLocation(shaderProgram, "uDirectionalColor");
 }
 
 //
@@ -222,7 +231,7 @@ function computeNormals(center, edge) {
 	// we always want the one that points "up" (i.e. positive z)
 	var n1 = vec3.cross(v1, v2),
 		n2 = vec3.cross(v2, v1),
-		normal = vec3.normalize(n1[2] < 0 ? n1 : n2),
+		normal = vec3.normalize(n1[2] >= 0 ? n1 : n2),
 		normalArray = Array.prototype.slice.call(normal);	// Return value is an object in the form of an array, not an actual array
 	// return [0, 0, 1, 0, 0, 1, 0, 0, 1];
 	return normalArray.concat(normalArray, normalArray);	// All three vertices have the same normal
@@ -348,7 +357,7 @@ function drawScene() {
 			vec3.scale(adjustedLD, -1);
 			gl.uniform3fv(shaderProgram.lightingDirectionUniform, adjustedLD);
 			// Directional light color
-			gl.uniform3f(shaderProgram.directionalColorUniform, 1, 1, 1);
+			gl.uniform3f(shaderProgram.directionalColorUniform, 0.2, 0.2, 0.2);
 		}
 		gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffers[i]);
 		gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, colorBuffers[i].itemSize, gl.FLOAT, false, 0, 0);
