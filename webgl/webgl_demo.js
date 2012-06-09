@@ -65,14 +65,17 @@ function handleMouseMove(event) {
 	var newX = event.clientX;
 	var newY = event.clientY;
 
-	var deltaX = newX - lastMouseX
+	var deltaX = newX - lastMouseX,
+		deltaY = newY - lastMouseY;
 	var newRotationMatrix = mat4.create();
 	mat4.identity(newRotationMatrix);
-	mat4.rotate(newRotationMatrix, degToRad(deltaX / 2), [0, 1, 0]);
-
-	var deltaY = newY - lastMouseY;
-	mat4.rotate(newRotationMatrix, degToRad(deltaY / 2), [1, 0, 0]);
-
+	//mat4.rotate(newRotationMatrix, degToRad(deltaX / 2), [0, 1, 0]);
+	if (event.shiftKey) {
+		mat4.rotate(newRotationMatrix, degToRad(deltaY / 4), [1, 0, 0]);
+	}
+	else {
+		mat4.rotate(newRotationMatrix, degToRad(deltaX / 4), [0, Math.sin(degToRad(deltaY / 4)), Math.cos(degToRad(deltaY / 4))]);
+	}
 	mat4.multiply(newRotationMatrix, moonRotationMatrix, moonRotationMatrix);
 
 	lastMouseX = newX
@@ -153,9 +156,17 @@ function initShaders() {
 	// Shader position
 	shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
 	gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
+	
+	// Shader normal
+	shaderProgram.vertexNormalAttribute = gl.getAttribLocation(shaderProgram, "aVertexNormal");
+    gl.enableVertexAttribArray(shaderProgram.vertexNormalAttribute);
+	
 	// Shader color
 	shaderProgram.vertexColorAttribute = gl.getAttribLocation(shaderProgram, 'aVertexColor');
 	gl.enableVertexAttribArray(shaderProgram.vertexColorAttribute);
+	
+	
+	
 	
 	shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, 'uPMatrix');
 	shaderProgram.mvMatrixUniform =  gl.getUniformLocation(shaderProgram, 'uMVMatrix');
@@ -221,19 +232,18 @@ function transformPosition(center, edge) {
 function computeNormals(center, edge) {
 	var start = edge.start,
 		end = edge.end,
-		a = vec3.create([center.pos.x, center.pos.y, center.elevation]),
-		b = vec3.create([start.pos.x, start.pos.y, start.elevation]),
-		c = vec3.create([end.pos.x, end.pos.y, end.elevation]),
+		a = vec3.create([center.pos.x, center.pos.y, center.elevation * 5]),
+		b = vec3.create([start.pos.x, start.pos.y, start.elevation * 5]),
+		c = vec3.create([end.pos.x, end.pos.y, end.elevation * 5]),
 		v1 = vec3.subtract(b, a, []),	// need empty array as output of operation, otherwise it is performed in place on the first argument
 		v2 = vec3.subtract(c, a, []);
 	
 	// The normal can point in two directions
 	// we always want the one that points "up" (i.e. positive z)
-	var n1 = vec3.cross(v1, v2),
-		n2 = vec3.cross(v2, v1),
+	var n1 = vec3.cross(v1, v2, []),
+		n2 = vec3.cross(v2, v1, []),
 		normal = vec3.normalize(n1[2] >= 0 ? n1 : n2),
 		normalArray = Array.prototype.slice.call(normal);	// Return value is an object in the form of an array, not an actual array
-	// return [0, 0, 1, 0, 0, 1, 0, 0, 1];
 	return normalArray.concat(normalArray, normalArray);	// All three vertices have the same normal
 }
 
@@ -292,23 +302,6 @@ function initBuffers() {
 			normalBuffers.push(currentNormalBuffer);
 			colorBuffers.push(currentColorBuffer);
 		}
-		// gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-		// currentBuffer.itemSize = 3;
-		// currentBuffer.numItems = j;
-		
-		// Color
-		// currentColorBuffer = gl.createBuffer();
-		// gl.bindBuffer(gl.ARRAY_BUFFER, currentColorBuffer);
-		// colors = [];
-		// for (var k = 0; k < j; k++) {
-			// colors = colors.concat(hexToArgb(centers[i].fill));
-		// }
-		// gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-		// currentColorBuffer.itemSize = 4;
-		// currentColorBuffer.numItems = j;
-		// Add the finished buffers to the queue
-		// positionBuffers.push(currentBuffer);
-		// colorBuffers.push(currentColorBuffer);
 	}
 }
 
@@ -333,25 +326,23 @@ function drawScene() {
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	// Set up the camera projection (perspective in this case)
 	mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
-	// Reset the drawing matrix
-	// if (first) {
-		// mat4.identity(mvMatrix);
-	// }
-	// Draw the triangle
-	// if (first) {
-		// mat4.translate(mvMatrix, [-1.5, 0.0, -7.0]);
-	// }
+
 	for (var i = 0; i < positionBuffers.length; i++) {
 		gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffers[i]);
 		gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, positionBuffers[i].itemSize, gl.FLOAT, false, 0, 0);
+		
 		gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffers[i]);
 		gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, normalBuffers[i].itemSize, gl.FLOAT, false, 0, 0);
+		
+		gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffers[i]);
+		gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, colorBuffers[i].itemSize, gl.FLOAT, false, 0, 0);
+		
 		gl.uniform1i(shaderProgram.useLightingUniform, true);
 		if (lighting) {
 			// Ambient Light color
 			gl.uniform3f(shaderProgram.ambientColorUniform, 0.8, 0.8, 0.8);
 			// Light direction
-			var lightingDirection = [-0.25, -0.25, -1],
+			var lightingDirection = [0, -1, 0],
 				adjustedLD = vec3.create();
 			vec3.normalize(lightingDirection, adjustedLD);
 			vec3.scale(adjustedLD, -1);
@@ -359,25 +350,12 @@ function drawScene() {
 			// Directional light color
 			gl.uniform3f(shaderProgram.directionalColorUniform, 0.2, 0.2, 0.2);
 		}
-		gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffers[i]);
-		gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, colorBuffers[i].itemSize, gl.FLOAT, false, 0, 0);
 		// Flush the vertices to the graphics card
 		setMatrixUniforms();
 		// Finally draw
 		gl.drawArrays(gl.TRIANGLES, 0, positionBuffers[i].numItems);
 	}	
-	
-	// Start the square
-	// if (first) {
-		// mat4.translate(mvMatrix, [3.0, 0.0, -10.0]);
-	// }
-	// gl.bindBuffer(gl.ARRAY_BUFFER, squareVertexPositionBuffer);
-	// gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, squareVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
-	// gl.bindBuffer(gl.ARRAY_BUFFER, squareVertexColorBuffer);
-	// gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, squareVertexColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
-	// setMatrixUniforms();
-	// // gl.drawArrays(gl.TRIANGLE_STRIP, 0, squareVertexPositionBuffer.numItems);
-	
+
 	mat4.identity(mvMatrix);
 	mat4.translate(mvMatrix, [0, 0, -0.5]);
 	mat4.multiply(mvMatrix, moonRotationMatrix);
