@@ -42,6 +42,7 @@ function degToRad(degrees) {
 var mouseDown = false;
 var lastMouseX = null;
 var lastMouseY = null;
+var currentAngle = 0;
 
 var moonRotationMatrix = mat4.create();
 mat4.identity(moonRotationMatrix);
@@ -69,12 +70,13 @@ function handleMouseMove(event) {
 		deltaY = newY - lastMouseY;
 	var newRotationMatrix = mat4.create();
 	mat4.identity(newRotationMatrix);
-	//mat4.rotate(newRotationMatrix, degToRad(deltaX / 2), [0, 1, 0]);
+	
 	if (event.shiftKey) {
 		mat4.rotate(newRotationMatrix, degToRad(deltaY / 4), [1, 0, 0]);
+		currentAngle += degToRad(deltaY / 4);
 	}
 	else {
-		mat4.rotate(newRotationMatrix, degToRad(deltaX / 4), [0, Math.sin(degToRad(deltaY / 4)), Math.cos(degToRad(deltaY / 4))]);
+		mat4.rotate(newRotationMatrix, degToRad(deltaX / 4), [0, Math.sin(-currentAngle), Math.cos(-currentAngle)]);
 	}
 	mat4.multiply(newRotationMatrix, moonRotationMatrix, moonRotationMatrix);
 
