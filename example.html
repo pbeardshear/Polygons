@@ -53,9 +53,11 @@
 		}
 	</script>
 	<!-- End shaders -->
+	<!--
 	<script type="text/javascript" src="webgl/glMatrix-0.9.5.min.js"></script>
 	<script type="text/javascript" src="webgl/webgl-utils.js"></script>
 	<script type="text/javascript" src="webgl/webgl_demo.js"></script>
+	-->
 	<!-- End test -->
 	<script>
 		Polygons.load(['paths', 'oceans', 'elevation'], function () {
@@ -64,9 +66,9 @@
 			Polygons.Elevation.generate(5);
 			// Polygons.Rivers.generate(6);
 			// Draw the polygons
-			// Polygons.draw(document.getElementById('polygons'));
+			Polygons.draw(document.getElementById('polygons'));
 			// WebGL stuff
-			webGLStart();
+			// webGLStart();
 		});
 	</script>
 	<link rel="stylesheet" href="lib/css/bootstrap.min.css" />
