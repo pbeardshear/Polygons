@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<title>N-GON!</title>
+	<title>Polygons</title>
 	<script src="lib/require.js"></script>
 	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
 	<script src="lib/bootstrap.js"></script>
@@ -53,22 +53,23 @@
 		}
 	</script>
 	<!-- End shaders -->
-	<!--
+	
 	<script type="text/javascript" src="webgl/glMatrix-0.9.5.min.js"></script>
 	<script type="text/javascript" src="webgl/webgl-utils.js"></script>
-	<script type="text/javascript" src="webgl/webgl_demo.js"></script>
-	-->
+	<!--<script type="text/javascript" src="webgl/webgl_demo.js"></script>-->
+	
 	<!-- End test -->
 	<script>
-		Polygons.load(['paths', 'oceans', 'elevation'], function () {
+		Polygons.load({ viewers: ['WebGL'], modules: ['paths', 'oceans', 'elevation']}, function () {
 			Polygons.generate(600, 1000, 700, 4);
-			Polygons.Oceans.generate(true, 2, null, 60);
-			Polygons.Elevation.generate(5);
+			Polygons.modules.Oceans.generate(true, 2, null, 60);
+			Polygons.modules.Elevation.generate(5);
 			// Polygons.Rivers.generate(6);
 			// Draw the polygons
 			Polygons.draw(document.getElementById('polygons'));
 			// WebGL stuff
-			// webGLStart();
+			// Polygons.viewers.WebGL.init(document.getElementById('polygons'));
+			// Polygons.viewers.WebGL.draw();
 		});
 	</script>
 	<link rel="stylesheet" href="lib/css/bootstrap.min.css" />

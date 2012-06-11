@@ -6,7 +6,8 @@
 
 define(function () {
 	// @private variables
-	var gl,
+	var me,
+		gl,
 		// Rotation matrices
 		mvMatrix,
 		pMatrix,
@@ -28,10 +29,10 @@ define(function () {
 		useLighting = false;
 		
 	var util = {
-		degToRad: function () {
+		degToRad: function (degrees) {
 			return degrees * Math.PI / 180;
 		},
-		hexToArgb: function () {
+		hexToArgb: function (hex) {
 			var hexstr = hex;
 			if (hex[0] == '#') {
 				hexstr = hex.substring(1);
@@ -62,13 +63,13 @@ define(function () {
 			mat4.identity(newRotationMatrix);
 			
 			if (event.shiftKey) {
-				mat4.rotate(newRotationMatrix, degToRad(deltaY / 4), [1, 0, 0]);
-				rotation += degToRad(deltaY / 4);
+				mat4.rotate(newRotationMatrix, util.degToRad(deltaY / 4), [1, 0, 0]);
+				rotation += util.degToRad(deltaY / 4);
 			}
 			else {
-				mat4.rotate(newRotationMatrix, degToRad(deltaX / 4), [0, Math.sin(-rotation), Math.cos(-rotation)]);
+				mat4.rotate(newRotationMatrix, util.degToRad(deltaX / 4), [0, Math.sin(-rotation), Math.cos(-rotation)]);
 			}
-			mat4.multiply(newRotationMatrix, moonRotationMatrix, moonRotationMatrix);
+			mat4.multiply(newRotationMatrix, rotationMatrix, rotationMatrix);
 
 			lastMouseX = newX
 			lastMouseY = newY;
@@ -114,6 +115,7 @@ define(function () {
 			
 			return shader;
 		},
+		
 		_setMatrixUniforms: function () {
 			gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
 			gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
@@ -123,8 +125,11 @@ define(function () {
 			mat3.transpose(normalMatrix);
 			gl.uniformMatrix3fv(shaderProgram.nMatrixUniform, false, normalMatrix);
 		},
+		
 		_initGL: function (canvas) {
 			try {
+				me = this;
+				
 				gl = canvas.getContext('experimental-webgl');
 				gl.viewportWidth = canvas.width;
 				gl.viewportHeight = canvas.height;
@@ -138,6 +143,7 @@ define(function () {
 				throw new Error('Unable to initialize WebGL.');
 			}
 		},
+		
 		_initBuffers: function () {
 			var centers = Polygons.centers,
 				corners = Polygons.corners,
@@ -176,7 +182,7 @@ define(function () {
 					gl.bindBuffer(gl.ARRAY_BUFFER, currentColorBuffer);
 					colors = [];
 					for (var k = 0; k < 3; k++) {
-						colors = colors.concat(hexToArgb(centers[i].fill));
+						colors = colors.concat(util.hexToArgb(centers[i].fill));
 					}
 					gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
 					currentColorBuffer.itemSize = 4;
@@ -188,9 +194,10 @@ define(function () {
 				}
 			}
 		},
+		
 		_initShaders: function () {
-			var fragmentShader = getShader(gl, 'shader-fs'),
-				vertexShader = getShader(gl, 'shader-vs');
+			var fragmentShader = this._getShader(gl, 'shader-fs'),
+				vertexShader = this._getShader(gl, 'shader-vs');
 				shaderProgram = gl.createProgram();
 			// Each shader program can support one vertex and one fragment shader
 			gl.attachShader(shaderProgram, vertexShader);
@@ -226,6 +233,7 @@ define(function () {
 			shaderProgram.lightingDirectionUniform = gl.getUniformLocation(shaderProgram, "uLightingDirection");
 			shaderProgram.directionalColorUniform = gl.getUniformLocation(shaderProgram, "uDirectionalColor");
 		},
+		
 		// Return the triangle whose position is transformed from
 		// the default <canvas> coordinate system to the WebGL one
 		_transformPosition: function (center, edge) {
@@ -281,7 +289,7 @@ define(function () {
 		init: function (canvas) {
 			// This will mask the view with a 'loading...'
 			// This call isn't required, but it is recommended 
-			this.fireEvent('loading');
+			// this.fireEvent('loading');
 			
 			this._initGL(canvas);
 			this._initShaders();
@@ -298,7 +306,7 @@ define(function () {
 			document.onmousemove = util.onMouseMove;
 			
 			// This will hide the load mask and allow interaction with the view
-			this.fireEvent('loaded');
+			// this.fireEvent('loaded');
 		},
 		
 		draw: function () {
@@ -319,14 +327,14 @@ define(function () {
 				gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, colorBuffers[i].itemSize, gl.FLOAT, false, 0, 0);
 				
 				// Flush the vertices to the graphics card
-				this._setMatrixUniforms();
+				me._setMatrixUniforms();
 				// Finally draw
 				gl.drawArrays(gl.TRIANGLES, 0, positionBuffers[i].numItems);
 			}
 
 			// Lighting
 			gl.uniform1i(shaderProgram.useLightingUniform, true);
-			if (lighting) {
+			if (useLighting) {
 				// Ambient Light color
 				gl.uniform3f(shaderProgram.ambientColorUniform, 0.8, 0.8, 0.8);
 				// Light direction
@@ -338,12 +346,12 @@ define(function () {
 				// Directional light color
 				gl.uniform3f(shaderProgram.directionalColorUniform, 0.2, 0.2, 0.2);
 			}
-
+			
 			mat4.identity(mvMatrix);
 			mat4.translate(mvMatrix, [0, 0, -0.5]);
-			mat4.multiply(mvMatrix, moonRotationMatrix);
+			mat4.multiply(mvMatrix, rotationMatrix);
 			
-			requestAnimFrame.call(this, this.draw);
+			requestAnimFrame(me.draw);
 		}
 	};
 });
