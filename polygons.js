@@ -65,24 +65,71 @@ Polygons = (function () {
 			}
 		},
 		
+		loadedModules: {},
+		
 		// Load map modules as plugins to the Polygon generator
 		load: function (modules, callback) {
-			if (Array.isArray(modules)) {
-				// Load the modules in order
+			if (typeof modules == 'object') {
 				var me = this,
-					directoryPrefix = 'modules/',
+					namespaceMapping = null,
+					namespaces = null,
+					directoryPrefix,
+					moduleNames,
+					pathedModules;
+					
+				if (Array.isArray(modules)) {
+					// We only have an array of modules
+					moduleNames = modules;
+					directoryPrefix = 'modules/';
 					pathedModules = modules.map(function (name) { return directoryPrefix + name; });
+				}
+				else {
+					namespaceMapping = {};
+					namespaces = [];
+					// Modules are namespaced
+					pathedModules = [];
+					moduleNames = [];
+					for (var dir in modules) {
+						if (modules.hasOwnProperty(dir)) {
+							namespaces.push(dir);
+							directoryPrefix = dir + '/';
+							pathedModules = pathedModules.concat(modules[dir].map(function (name) {
+								namespaceMapping[name] = dir;
+								moduleNames.push(name);
+								return directoryPrefix + name; 
+							}));
+						}
+					}
+				}
 				require(pathedModules, function () {
 					// Finished loading all modules
 					// We need to use the arguments array to dynamically get all module definitions
-					var loadedModules = Array.prototype.slice.call(arguments, 0);
+					var moduleDefs = Array.prototype.slice.call(arguments, 0),
+						moduleName,
+						layer;
+						
 					// Attach each loaded module to the Polygons namespaces
-					for (var i = 0; i < loadedModules.length; i++) {
-						var moduleName = util.capitalize(modules[i]);
+					if (namespaceMapping && namespaces) {
+						// If the modules were namespaced, we need to add them here
+						for (var i = 0; i < namespaces.length; i++) {
+							Polygons[namespaces[i]] = {};
+						}
+					}
+					for (var i = 0; i < moduleDefs.length; i++) {
+						moduleName = util.capitalize(moduleNames[i]);
 						// Load the module into the Polygons namespace
-						Polygons[moduleName] = loadedModules[i];
+						if (namespaceMapping) {
+							// Have to use moduleNames, because moduleName is capitalized
+							var namespace = namespaceMapping[moduleNames[i]];
+							Polygons[namespace][moduleName] = moduleDefs[i];
+						}
+						else {
+							Polygons[moduleName] = moduleDefs[i];
+						}
+						// Maintain a reference to the modules that we are using
+						me.loadedModules[moduleName.toLowerCase()] = moduleDefs[i];
 						// Check if this module defines a layer
-						var layer = loadedModules[i].layer;
+						layer = moduleDefs[i].layer;
 						if (layer && !me._buffer[layer]) {
 							me._buffer[layer] = [];
 							// Defer the creation of the <canvas> elements that will house these layers until we can batch them
@@ -112,7 +159,7 @@ Polygons = (function () {
 				});
 			}
 			else {
-				throw new Error('Failed to load Polygons: Argument to load must be an array of module names');
+				throw new Error('Failed to load Polygons: first argument is not an object.');
 			}
 		},
 		
@@ -239,8 +286,8 @@ Polygons = (function () {
 						if (edge.stroke) {
 							markedEdges.push(edge);
 						}
-						this.context.lineTo(edge.start.pos.x, edge.start.pos.y);
-						this.context.lineTo(edge.end.pos.x, edge.end.pos.y);
+						this.context.lineTo(edge.start.pos.x << 0, edge.start.pos.y << 0);
+						this.context.lineTo(edge.end.pos.x << 0, edge.end.pos.y << 0);
 					}
 					this.context.closePath();
 					this.context.stroke();
@@ -268,6 +315,10 @@ Polygons = (function () {
 		
 		getEdge: function (start, end) {
 			return Polygons.edges[start.id + '-' + end.id] || Polygons.edges[end.id + '-' + start.id] || null;
+		},
+		
+		hasModule: function (name) {
+			return !!this.loadedModules[name];
 		}
 	};
 })();

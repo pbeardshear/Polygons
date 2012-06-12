@@ -1,20 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+	<title>Polygons</title>
 	<script src="lib/require.js"></script>
 	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
 	<script src="lib/bootstrap.js"></script>
 	<script src="lib/bootstrap-collapse.js"></script>
 	<script type="text/javascript" src="lib/rhill-voronoi.js"></script>
 	<script type="text/javascript" src="polygons.js"></script>
+	<!-- Test for 3D viewer -->
+	<!-- Shaders -->
+	<script id="shader-fs" type="x-shader/x-fragment">
+		precision mediump float;
+		
+		varying vec4 vColor;
+		varying vec3 vLightWeighting;
+		
+		void main(void) {
+			gl_FragColor = vec4(vColor.rgb * vLightWeighting, vColor.a);
+		}
+	</script>
+	<script id="shader-vs" type="x-shader/x-vertex">
+		attribute vec3 aVertexPosition;
+		attribute vec3 aVertexNormal;
+		attribute vec4 aVertexColor;
+		
+		uniform mat4 uMVMatrix;
+		uniform mat4 uPMatrix;
+		uniform mat3 uNMatrix;
+		
+		uniform vec3 uAmbientColor;
+		
+		uniform vec3 uLightingDirection;
+		uniform vec3 uDirectionalColor;
+		
+		uniform bool uUseLighting;
+		
+		varying vec4 vColor;
+		varying vec3 vLightWeighting;
+		
+		void main(void) {
+			gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+			vColor = aVertexColor;
+			if (!uUseLighting) {
+				vLightWeighting = vec3(1.0, 1.0, 1.0);
+			}
+			else {
+				vec3 transformedNormal = uNMatrix * aVertexNormal;
+				float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 1.0);
+				vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;
+			}
+		}
+	</script>
+	<!-- End shaders -->
 	<script>
-		Polygons.load(['paths', 'oceans', 'elevation', 'rivers'], function () {
+		Polygons.load({ util: ['navigation'], modules: ['paths', 'oceans', 'elevation']}, function () {
+			// Create the polygons
 			Polygons.generate(600, 1000, 700, 4);
-			Polygons.Oceans.generate(true, 2, null, 60);
-			Polygons.Elevation.generate(5);
-			Polygons.Rivers.generate(6);
-			// Draw the polygons
+			
+			Polygons.util.Navigation.init({
+				groups: {
+					'view': ['flatten', 'expand'],
+					'loaded modules': ['oceans', 'elevation', 'rivers']
+				}
+			});
+			
+			// Apply our modules to the polygon data
+			Polygons.modules.Oceans.generate(true, 2, null, 60);
+			Polygons.modules.Elevation.generate(5);
+			// Polygons.Rivers.generate(6);
+			
+			// Render to the canvas
 			Polygons.draw(document.getElementById('polygons'));
+			// WebGL stuff
+			// Polygons.viewers.WebGL.init(document.getElementById('polygons'));
+			// Polygons.viewers.WebGL.draw();
 		});
 	</script>
 	<link rel="stylesheet" href="lib/css/bootstrap.min.css" />

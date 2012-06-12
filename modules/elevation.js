@@ -40,7 +40,7 @@ define(['modules/oceans'], function () {
 				processing = [],
 				seen = {};
 			ElevationStep = stepSize || 10;
-			if (Polygons.Oceans) {
+			if (Polygons.hasModule('oceans')) {
 				// Mark the coasts initially, and move outward from there
 				// By default, coasts are at elevation 0 (sea level)
 				this._initCoasts(processing, seen);
