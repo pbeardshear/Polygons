@@ -8,6 +8,13 @@
 define(function () {
 	var modules,
 		groups;
+		
+	function generateHeader (text) {
+		var li = document.createElement('li');
+		li.setAttribute('class', 'nav-header');
+		li.innerHTML = text;
+		return li;
+	}
 	
 	return {
 		init: function (cfg) {

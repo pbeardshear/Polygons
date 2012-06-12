@@ -59,10 +59,19 @@
 			Polygons.generate(600, 1000, 700, 4);
 			
 			Polygons.util.Navigation.init({
-				groups: {
+				groups: [
+					{ name: 'view', modules: ['flatten', 'expand'] },
+					{ 
+						name: 'loaded modules', 
+						type: 'accordion',
+						modules: ['oceans', 'elevation', 'rivers']
+					}
 					'view': ['flatten', 'expand'],
-					'loaded modules': ['oceans', 'elevation', 'rivers']
-				}
+					'loaded modules': {
+						type: '
+						'oceans', 'elevation', 'rivers'
+					}
+				]
 			});
 			
 			// Apply our modules to the polygon data

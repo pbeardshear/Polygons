@@ -101,6 +101,7 @@ Polygons = (function () {
 						}
 					}
 				}
+				
 				require(pathedModules, function () {
 					// Finished loading all modules
 					// We need to use the arguments array to dynamically get all module definitions
